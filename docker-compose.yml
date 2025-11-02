@@ -1,0 +1,77 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: project_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql+psycopg2://app:app@db:5432/app
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=change-me-in-production
+      - SECRET_KEY=change-me-in-production-too
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    volumes:
+      - ./backend/tests:/app/tests
+    command: >
+      bash -c "
+      echo 'Waiting for database to be ready...' &&
+      while ! python3 -c 'import psycopg2; psycopg2.connect(\"postgresql://app:app@db:5432/app\")' 2>/dev/null; do
+        sleep 1;
+      done &&
+      echo 'Checking if seed data should be loaded...' &&
+      python3 scripts/load_seed_data.py &&
+      echo 'Starting Flask application...' &&
+      python3 -u src/main.py
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:5000/apidocs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:16-alpine
+    container_name: project_db
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: project_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  db_data:
+  redis_data:
+
