@@ -1,0 +1,29 @@
+{
+  "projects": [
+    {
+      "name": "E-Commerce Platform",
+      "description": "Build a complete e-commerce platform with user management, product catalog, shopping cart, and payment integration."
+    },
+    {
+      "name": "Mobile App Backend",
+      "description": "RESTful API backend for a mobile application with real-time notifications, user authentication, and content management."
+    },
+    {
+      "name": "Data Analytics Dashboard",
+      "description": "Create an analytics dashboard with real-time data visualization, reporting tools, and export capabilities."
+    },
+    {
+      "name": "Cloud Migration Project",
+      "description": "Migrate existing infrastructure to cloud platform with improved scalability and performance."
+    },
+    {
+      "name": "Customer Support System",
+      "description": "Build a support ticket system with chat integration, knowledge base, and automated responses."
+    },
+    {
+      "name": "Inventory Management",
+      "description": "Develop inventory tracking system with barcode scanning, stock alerts, and supplier management."
+    }
+  ]
+}
+

@@ -1,0 +1,53 @@
+{
+  "users": [
+    {
+      "name": "Admin User",
+      "email": "admin@example.com",
+      "password": "admin123",
+      "role": "admin"
+    },
+    {
+      "name": "Manager One",
+      "email": "manager1@example.com",
+      "password": "manager123",
+      "role": "manager"
+    },
+    {
+      "name": "Manager Two",
+      "email": "manager2@example.com",
+      "password": "manager123",
+      "role": "manager"
+    },
+    {
+      "name": "Member One",
+      "email": "member1@example.com",
+      "password": "member123",
+      "role": "member"
+    },
+    {
+      "name": "Member Two",
+      "email": "member2@example.com",
+      "password": "member123",
+      "role": "member"
+    },
+    {
+      "name": "Member Three",
+      "email": "member3@example.com",
+      "password": "member123",
+      "role": "member"
+    },
+    {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "password": "password123",
+      "role": "member"
+    },
+    {
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "password": "password123",
+      "role": "member"
+    }
+  ]
+}
+
