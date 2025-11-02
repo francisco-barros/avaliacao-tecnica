@@ -1,0 +1,520 @@
+{
+	"info": {
+		"name": "Project Management API",
+		"description": "Collection completa para testar a API de gerenciamento de projetos",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_postman_id": "project-management-api"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.access_token) {",
+									"        pm.environment.set('access_token', jsonData.access_token);",
+									"        console.log('Access token saved');",
+									"    }",
+									"    if (jsonData.refresh_token) {",
+									"        pm.environment.set('refresh_token', jsonData.refresh_token);",
+									"        console.log('Refresh token saved');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Autentica um usuário e retorna access_token e refresh_token"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.access_token) {",
+									"        pm.environment.set('access_token', jsonData.access_token);",
+									"        console.log('New access token saved');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{refresh_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "refresh"]
+						},
+						"description": "Renova o access_token usando o refresh_token"
+					},
+					"response": []
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New User\",\n    \"email\": \"newuser@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"member\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register"]
+						},
+						"description": "Registra um novo usuário (requer token Admin ou Manager)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de autenticação"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users"]
+						},
+						"description": "Lista todos os usuários (requer token Admin ou Manager)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User",
+					"event": [
+							{
+								"listen": "test",
+								"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.environment.set('user_id', jsonData.id);",
+									"        console.log('User ID saved:', jsonData.id);",
+									"    }",
+									"}"
+								],
+									"type": "text/javascript"
+								}
+							}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "{{user_id}}"]
+						},
+						"description": "Obtém um usuário por ID (requer token Admin ou Manager). Use List Users primeiro para obter um user_id."
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"role\": \"manager\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "{{user_id}}"]
+						},
+						"description": "Atualiza um usuário (requer token Admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "{{user_id}}"]
+						},
+						"description": "Deleta um usuário (requer token Admin)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de gerenciamento de usuários"
+		},
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "Create Project",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.environment.set('project_id', jsonData.id);",
+									"        console.log('Project ID saved:', jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"My Project\",\n    \"description\": \"Project description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/projects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects"]
+						},
+						"description": "Cria um novo projeto (requer token Manager ou Admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "List Projects",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/projects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects"]
+						},
+						"description": "Lista projetos do usuário autenticado"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/projects/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects", "{{project_id}}"]
+						},
+						"description": "Obtém um projeto por ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Project",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Project Name\",\n    \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/projects/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects", "{{project_id}}"]
+						},
+						"description": "Atualiza um projeto (requer ser o owner e token Manager ou Admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Project",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/projects/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects", "{{project_id}}"]
+						},
+						"description": "Deleta um projeto (requer ser o owner e token Manager ou Admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Member to Project",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": \"{{user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/projects/{{project_id}}/members",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects", "{{project_id}}", "members"]
+						},
+						"description": "Adiciona um membro ao projeto (requer ser o owner)"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Member from Project",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/projects/{{project_id}}/members/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "projects", "{{project_id}}", "members", "{{user_id}}"]
+						},
+						"description": "Remove um membro do projeto (requer ser o owner)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de gerenciamento de projetos"
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "Create Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.environment.set('task_id', jsonData.id);",
+									"        console.log('Task ID saved:', jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Task Title\",\n    \"description\": \"Task description\",\n    \"project_id\": \"{{project_id}}\",\n    \"assignee_id\": \"{{user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tasks"]
+						},
+						"description": "Cria uma nova tarefa (requer token Manager ou Admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tasks by Project",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tasks/project/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tasks", "project", "{{project_id}}"]
+						},
+						"description": "Lista todas as tarefas de um projeto"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Task Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"in_progress\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks/{{task_id}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tasks", "{{task_id}}", "status"]
+						},
+						"description": "Atualiza o status de uma tarefa (requer ser o assignee)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de gerenciamento de tarefas"
+		}
+	],
+	"variable": []
+}
+
