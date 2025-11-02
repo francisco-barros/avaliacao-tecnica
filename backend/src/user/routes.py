@@ -1,0 +1,190 @@
+from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
+from ..access_control.decorators import require_roles
+from .service import UserService
+from ..http_responses.responses import success, not_found, no_content, unprocessable_entity
+from ..log.service import LogService
+from ..log.models import ActionType
+
+
+users_bp = Blueprint("users", __name__)
+
+
+@users_bp.get("")
+@jwt_required()
+@require_roles(["admin", "manager"])  
+def list_users():
+    """
+    List all users
+    ---
+    tags:
+      - Users
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: List of users
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+      401:
+        description: Not authenticated
+      403:
+        description: Insufficient permissions (requires Admin or Manager)
+    """
+    return success(data=[u.to_dict() for u in UserService.list_users()])
+
+
+@users_bp.get("/<user_id>")
+@jwt_required()
+@require_roles(["admin", "manager"])  
+def get_user(user_id: str):
+    """
+    Get user by ID
+    ---
+    tags:
+      - Users
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        description: User ID
+    responses:
+      200:
+        description: User data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    role:
+                      type: string
+      401:
+        description: Not authenticated
+      403:
+        description: Insufficient permissions
+      404:
+        description: User not found
+    """
+    user = UserService.get_by_id(user_id)
+    if not user:
+        return not_found()
+    return success(data=user.to_dict())
+
+
+@users_bp.patch("/<user_id>")
+@jwt_required()
+@require_roles(["admin"])
+def update_user(user_id: str):
+    """
+    Update user
+    ---
+    tags:
+      - Users
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        description: User ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Updated Name
+              email:
+                type: string
+                format: email
+                example: updated@example.com
+              role:
+                type: string
+                enum: [admin, manager, member]
+                example: manager
+    responses:
+      200:
+        description: User updated
+        content:
+          application/json:
+            schema:
+              type: object
+      401:
+        description: Not authenticated
+      403:
+        description: Only Admin can update users
+      404:
+        description: User not found
+    """
+    try:
+        data = request.get_json() or {}
+        user = UserService.update_user(user_id, data)
+        LogService.log_action(action=ActionType.USER_UPDATED, user_id=user_id, resource_type="user", resource_id=user_id)
+        LogService.log_info("User updated successfully", context={"user_id": user_id})
+        return success(data=user.to_dict())
+    except ValueError as e:
+        LogService.log_error("Failed to update user", error=e, context={"user_id": user_id})
+        return not_found(str(e))
+
+
+@users_bp.delete("/<user_id>")
+@jwt_required()
+@require_roles(["admin"])  
+def delete_user(user_id: str):
+    """
+    Delete user
+    ---
+    tags:
+      - Users
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        description: User ID
+    responses:
+      204:
+        description: User deleted successfully
+      401:
+        description: Not authenticated
+      403:
+        description: Only Admin can delete users
+    """
+    UserService.delete_user(user_id)
+    LogService.log_action(action=ActionType.USER_DELETED, user_id=user_id, resource_type="user", resource_id=user_id)
+    LogService.log_info("User deleted successfully", context={"user_id": user_id})
+    return no_content()
