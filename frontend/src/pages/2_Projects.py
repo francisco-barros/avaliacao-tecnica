@@ -196,48 +196,9 @@ with tabs[0]:
                     try:
                         tasks = task_service.list_tasks(selected_project.get("id"))
                         if tasks:
-                            tasks_action = render_tasks_table(tasks, can_edit=True)
-                            
-                            if tasks_action and tasks_action.get("action") == "edit_status":
-                                task_item = tasks_action.get("item")
-                                st.markdown("---")
-                                st.markdown(f"### Update Task Status: {task_item.get('title')}")
-                                
-                                current_status = task_item.get("status", "").lower()
-                                task_status_options = [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.DONE]
-                                
-                                try:
-                                    current_index = task_status_options.index(current_status)
-                                except ValueError:
-                                    current_index = 0
-                                
-                                new_status = st.selectbox(
-                                    "New Status",
-                                    task_status_options,
-                                    index=current_index,
-                                    key=f"task_status_{task_item.get('id')}",
-                                    format_func=lambda x: {
-                                        TaskStatus.PENDING: "Pending",
-                                        TaskStatus.IN_PROGRESS: "In Progress",
-                                        TaskStatus.DONE: "Done"
-                                    }.get(x, x)
-                                )
-                                
-                                if st.button("Update Status", key=f"btn_update_task_{task_item.get('id')}", use_container_width=True):
-                                    try:
-                                        updated_task = task_service.update_status(task_item.get("id"), new_status)
-                                        show_success(f"Task status updated successfully!")
-                                        if table_action_key in st.session_state:
-                                            del st.session_state[table_action_key]
-                                        st.rerun()
-                                    except Exception as e:
-                                        error_msg = str(e)
-                                        if "403" in error_msg:
-                                            show_error("You do not have permission to update this task. Only the task assignee can update the status.")
-                                        elif "404" in error_msg:
-                                            show_error("Task not found")
-                                        else:
-                                            show_error(f"Error updating task: {error_msg}")
+                            for task in tasks:
+                                task["project_name"] = selected_project.get("name", "Unknown")
+                            render_tasks_table(tasks, can_edit=False, can_reassign=False, show_project=False)
                         else:
                             st.info("No tasks found for this project")
                     except Exception as e:

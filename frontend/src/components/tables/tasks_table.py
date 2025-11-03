@@ -17,22 +17,26 @@ from utils.formatters import format_status
 
 def render_tasks_table(
     tasks: List[Dict],
-    can_edit: bool = False
+    can_edit: bool = False,
+    can_reassign: bool = False,
+    show_project: bool = True
 ) -> Optional[Dict]:
     columns = [
         GridColumnConfig(field="id", header_name="ID", hide=True),
         GridColumnConfig(field="title", header_name="Title", flex=1.5),
         GridColumnConfig(field="description", header_name="Description", flex=2),
         GridColumnConfig(field="status", header_name="Status", flex=1),
+        GridColumnConfig(field="project_id", header_name="Project ID", hide=True),
+        GridColumnConfig(field="project_name", header_name="Project", flex=1, hide=not show_project),
         GridColumnConfig(field="assignee_id", header_name="Assignee ID", hide=True),
     ]
     
     config = GridTableConfig(
         columns=columns,
         id_field="id",
-        height=300,
+        height=400,
         width="100%",
-        pre_select_first=False,
+        pre_select_first=True,
         css_class="ag-theme-streamlit"
     )
     
@@ -43,6 +47,8 @@ def render_tasks_table(
                 "title": task.get("title", ""),
                 "description": task.get("description", "")[:100] + "..." if len(task.get("description", "")) > 100 else task.get("description", ""),
                 "status": format_status(task.get("status", "")),
+                "project_id": str(task.get("project_id", "")),
+                "project_name": task.get("project_name", "Unknown"),
                 "assignee_id": str(task.get("assignee_id", "")) if task.get("assignee_id") else "Unassigned",
             }
             for task in tasks_list
@@ -55,6 +61,15 @@ def render_tasks_table(
             "name": "edit_status",
             "label": "Update Status",
             "key": "btn_edit_task_status",
+            "can_perform": True,
+            "disabled": False
+        })
+    
+    if can_reassign:
+        actions.append({
+            "name": "reassign",
+            "label": "Reassign Task",
+            "key": "btn_reassign_task",
             "can_perform": True,
             "disabled": False
         })

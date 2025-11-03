@@ -25,6 +25,7 @@ API_ENDPOINTS = {
         "create": f"{API_BASE_URL}/api/tasks",
         "list": f"{API_BASE_URL}/api/tasks/project",
         "update_status": f"{API_BASE_URL}/api/tasks",
+        "reassign": f"{API_BASE_URL}/api/tasks",
     },
 }
 
