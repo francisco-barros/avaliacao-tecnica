@@ -6,6 +6,7 @@ Complete project management system with Flask REST API backend and Streamlit fro
 
 - JWT authentication with role-based access control
 - Project and task management
+- User profile management (self-service profile updates)
 - Real-time updates via WebSockets
 - Redis caching (1 minute TTL for all queries)
 - Swagger/OpenAPI documentation
@@ -14,13 +15,22 @@ Complete project management system with Flask REST API backend and Streamlit fro
 
 ### With Docker (Recommended)
 
+Builds and runs both backend and frontend services together:
+
 ```bash
 git clone <repository-url>
 cd avaliacao-tecnica
 docker compose up --build
 ```
 
+This command will:
+- Build and start the backend API (Flask)
+- Build and start the frontend application (Streamlit)
+- Start PostgreSQL and Redis services
+- Load seed data automatically on first startup
+
 **Services:**
+- Frontend (Streamlit): http://localhost:8501
 - Backend API: http://localhost:5000
 - Swagger UI: http://localhost:5000/apidocs
 - PostgreSQL: localhost:5433
@@ -36,6 +46,20 @@ Automatically loaded on first startup:
 - Admin: `admin@example.com` / `admin123`
 - Manager: `manager1@example.com` / `manager123`
 - Member: `member1@example.com` / `member123`
+
+### Running Frontend Separately (Development)
+
+To run the frontend locally for development:
+
+```bash
+cd frontend
+pip install -r requirements.txt
+streamlit run "src/🔐_Login___User_Management.py"
+```
+
+The frontend will be available at http://localhost:8501
+
+**Note:** Make sure the backend API is running (http://localhost:5000) and accessible from the frontend.
 
 ## Testing
 
@@ -70,7 +94,7 @@ Use Postman collection for reliable endpoint testing:
 ### Users
 - `GET /api/users` - List all users (Admin/Manager only)
 - `GET /api/users/<user_id>` - Get user by ID (Admin/Manager only)
-- `PATCH /api/users/<user_id>` - Update user (Admin only)
+- `PATCH /api/users/<user_id>` - Update user (Users can update their own profile, Admin can update any user. Only Admin can change roles)
 - `DELETE /api/users/<user_id>` - Delete user (Admin only)
 
 ### Projects
@@ -167,11 +191,36 @@ backend/
 └── pytest.ini                    # Test configuration
 ```
 
-### Frontend Structure (Coming Soon)
+### Frontend Structure
 
 ```
 frontend/
 ├── src/                         # Source code
+│   ├── 🔐_Login___User_Management.py  # Main entry point (Login/User Management page)
+│   ├── pages/                   # Streamlit pages
+│   │   ├── 2_Projects.py        # Projects management page
+│   │   ├── 3_Tasks.py           # Tasks management page
+│   │   └── 4_Profile.py         # Profile/Settings page
+│   ├── components/              # Reusable components
+│   │   ├── forms/               # Form components
+│   │   ├── tables/              # Table components
+│   │   └── managers/            # Management components
+│   ├── services/                # API services
+│   │   ├── api/                 # Service classes (AuthService, UserService, etc.)
+│   │   └── base/                # Base API client
+│   ├── state/                   # State management
+│   │   └── auth_state.py        # Authentication state
+│   ├── utils/                   # Utilities
+│   │   ├── constants.py         # Constants (UserRole, etc.)
+│   │   ├── formatters.py        # Data formatters
+│   │   ├── helpers.py           # Helper functions
+│   │   └── validators.py        # Validation functions
+│   ├── config/                  # Configuration
+│   │   ├── api_config.py        # API endpoints configuration
+│   │   └── settings.py          # Application settings
+│   └── styles/                  # CSS styles
+│       ├── main.css             # Main styles
+│       └── components.css       # Component styles
 ├── Dockerfile                   # Frontend container
 ├── requirements.txt             # Python dependencies
 └── README.md

@@ -35,7 +35,7 @@ Coverage: 89%
 **Users** (`/api/users`)
 - `GET /` - List users
 - `GET /<id>` - Get user
-- `PATCH /<id>` - Update user
+- `PATCH /<id>` - Update user (Users can update their own profile - name and email. Admin can update any user and change roles)
 - `DELETE /<id>` - Delete user (soft delete). Cascades: removes user from owned projects and reassigns tasks to AWAITING_REASSIGNMENT status
 
 **Projects** (`/api/projects`)

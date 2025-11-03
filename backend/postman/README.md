@@ -35,7 +35,7 @@ Select environment **"Project Management API - Local"** in Postman.
 
 **Auth**: Login, Refresh, Register
 
-**Users**: List, Get, Update, Delete
+**Users**: List, Get, Update (Users can update own profile, Admin can update any user), Delete
 
 **Projects**: Create, List, Get, Update, Delete, Add Member, Remove Member
 

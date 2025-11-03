@@ -102,6 +102,15 @@ def get_user(user_id: str):
 def update_user(user_id: str):
     """
     Update user
+    
+    Allows authenticated users to update their own profile (name and email).
+    Administrators can update any user and change user roles.
+    
+    Permission rules:
+    - Any authenticated user can update their own name and email
+    - Only administrators can update other users' profiles
+    - Only administrators can change a user's role
+    
     ---
     tags:
       - Users
@@ -132,19 +141,31 @@ def update_user(user_id: str):
                 type: string
                 enum: [admin, manager, member]
                 example: manager
+                description: Only administrators can change roles
     responses:
       200:
-        description: User updated
+        description: User updated successfully
         content:
           application/json:
             schema:
               type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
       401:
         description: Not authenticated
       403:
         description: Forbidden - only admin can update other users or change roles
       404:
         description: User not found
+      409:
+        description: Conflict - email already in use
     """
     try:
         requester_id = str(get_jwt_identity())
