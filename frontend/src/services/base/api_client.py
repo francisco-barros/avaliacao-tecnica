@@ -41,6 +41,8 @@ class APIClient:
                 error_data = {"message": response.text}
             error_msg = error_data.get("message", f"{response.status_code} {response.reason}")
             raise Exception(f"{response.status_code} {response.reason}: {error_msg}")
+        if response.status_code == 204:
+            return {}
         return response.json()
 
     def patch(self, url: str, data: Optional[Dict] = None) -> Dict[str, Any]:
