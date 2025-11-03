@@ -1,8 +1,8 @@
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from ..access_control.decorators import require_roles
 from .service import UserService
-from ..http_responses.responses import success, not_found, no_content, unprocessable_entity
+from ..http_responses.responses import success, not_found, no_content, unprocessable_entity, forbidden
 from ..log.service import LogService
 from ..log.models import ActionType
 
@@ -99,7 +99,6 @@ def get_user(user_id: str):
 
 @users_bp.patch("/<user_id>")
 @jwt_required()
-@require_roles(["admin"])
 def update_user(user_id: str):
     """
     Update user
@@ -143,15 +142,30 @@ def update_user(user_id: str):
       401:
         description: Not authenticated
       403:
-        description: Only Admin can update users
+        description: Forbidden - only admin can update other users or change roles
       404:
         description: User not found
     """
     try:
+        requester_id = str(get_jwt_identity())
+        claims = get_jwt()
+        requester_role = claims.get("role")
+        is_admin = requester_role == "admin"
+        
         data = request.get_json() or {}
+        user_id_str = str(user_id)
+        
+        if not is_admin and requester_id != user_id_str:
+            LogService.log_warning("Unauthorized user update attempt", context={"requester_id": requester_id, "target_user_id": user_id_str})
+            return forbidden("You can only update your own profile")
+        
+        if not is_admin and "role" in data:
+            LogService.log_warning("Unauthorized role update attempt", context={"requester_id": requester_id, "target_user_id": user_id_str})
+            return forbidden("Only administrators can change user roles")
+        
         user = UserService.update_user(user_id, data)
-        LogService.log_action(action=ActionType.USER_UPDATED, user_id=user_id, resource_type="user", resource_id=user_id)
-        LogService.log_info("User updated successfully", context={"user_id": user_id})
+        LogService.log_action(action=ActionType.USER_UPDATED, user_id=requester_id, resource_type="user", resource_id=user_id)
+        LogService.log_info("User updated successfully", context={"user_id": user_id, "requester_id": requester_id})
         return success(data=user.to_dict())
     except ValueError as e:
         LogService.log_error("Failed to update user", error=e, context={"user_id": user_id})
