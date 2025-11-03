@@ -11,7 +11,7 @@ pip install -r requirements.txt
 ## Running
 
 ```bash
-streamlit run src/main.py
+streamlit run "src/🔐_Login___User_Management.py"
 ```
 
 ## Docker
