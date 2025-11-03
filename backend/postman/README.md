@@ -39,7 +39,7 @@ Select environment **"Project Management API - Local"** in Postman.
 
 **Projects**: Create, List, Get, Update, Delete, Add Member, Remove Member
 
-**Tasks**: Create, List, Update Status
+**Tasks**: Create, List, Update Status, Reassign
 
 ## Auto Variables
 

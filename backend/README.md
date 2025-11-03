@@ -50,7 +50,8 @@ Coverage: 89%
 **Tasks** (`/api/tasks`)
 - `POST /` - Create task
 - `GET /project/<project_id>` - List tasks
-- `PATCH /<task_id>/status` - Update status
+- `PATCH /<task_id>/status` - Update status (only assignee can update)
+- `PATCH /<task_id>/assignee` - Reassign task to a new assignee (admin, manager or project owner only)
 
 ## Roles
 
