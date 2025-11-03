@@ -1,0 +1,15 @@
+.stButton > button {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.chart-container {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+

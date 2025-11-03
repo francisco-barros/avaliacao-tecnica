@@ -1,0 +1,35 @@
+.stApp {
+    font-family: 'Inter', sans-serif;
+}
+
+.main-container {
+    padding: 2rem;
+}
+
+.card {
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: white;
+}
+
+.form-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.success-message {
+    color: #28a745;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: #d4edda;
+}
+
+.error-message {
+    color: #dc3545;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: #f8d7da;
+}
+

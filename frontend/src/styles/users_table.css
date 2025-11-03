@@ -1,0 +1,41 @@
+.ag-theme-streamlit {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.ag-theme-streamlit .ag-header {
+    background-color: #1976d2;
+    color: white;
+    font-weight: bold;
+}
+
+.ag-theme-streamlit .ag-header-cell {
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ag-theme-streamlit .ag-header-cell-text {
+    color: white;
+}
+
+.ag-theme-streamlit .ag-row:nth-child(even) {
+    background-color: #e3f2fd !important;
+}
+
+.ag-theme-streamlit .ag-row:nth-child(odd) {
+    background-color: #ffffff !important;
+}
+
+.ag-theme-streamlit .ag-row:hover {
+    background-color: #bbdefb !important;
+}
+
+.ag-theme-streamlit .ag-cell {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px;
+}
+
+.ag-theme-streamlit .ag-row-selected {
+    background-color: #90caf9 !important;
+}
+
