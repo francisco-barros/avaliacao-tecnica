@@ -322,6 +322,11 @@ def render_task_status_chart(task_stats):
     st.plotly_chart(fig, use_container_width=True)
 
 def render_dashboard_content(project_service, task_service):
+    if st.session_state.get("projects_cache_cleared"):
+        del st.session_state.projects_cache_cleared
+    if st.session_state.get("tasks_cache_cleared"):
+        del st.session_state.tasks_cache_cleared
+    
     projects, all_tasks = load_projects_and_tasks(project_service, task_service)
     
     if not projects:
@@ -360,6 +365,7 @@ def render_dashboard_content(project_service, task_service):
     st.markdown("---")
     
     render_projects_overview(projects, all_tasks)
+
 
 load_css()
 
