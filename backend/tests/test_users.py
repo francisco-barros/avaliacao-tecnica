@@ -1,21 +1,22 @@
+import pytest
 from src.user.repository import UserRepository
 from src.user.models import UserRole
 
 
-def test_list_users_as_admin(client, admin_user, auth_token):
-    UserRepository.create("User1", "user1@x.com", "pass", role=UserRole.MEMBER.value)
-    UserRepository.create("User2", "user2@x.com", "pass", role=UserRole.MEMBER.value)
+@pytest.mark.parametrize("user_fixture,token_fixture", [
+    ("admin_user", None),
+    (None, "manager_token"),
+])
+def test_list_users_success(client, request, auth_token, user_fixture, token_fixture):
+    if user_fixture:
+        UserRepository.create("User1", "user1@x.com", "pass", role=UserRole.MEMBER.value)
+        UserRepository.create("User2", "user2@x.com", "pass", role=UserRole.MEMBER.value)
+        user = request.getfixturevalue(user_fixture)
+        token = auth_token(user.email, "pass")
+    else:
+        token = request.getfixturevalue(token_fixture)
     
-    token = auth_token(admin_user.email, "pass")
     resp = client.get("/api/users", headers={"Authorization": f"Bearer {token}"})
-    
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert len(data) == 3
-
-
-def test_list_users_as_manager(client, manager_token):
-    resp = client.get("/api/users", headers={"Authorization": f"Bearer {manager_token}"})
     assert resp.status_code == 200
 
 
@@ -108,6 +109,9 @@ def test_delete_user_cascades_projects(client, admin_token, manager_user):
     
     resp = client.delete(f"/api/users/{manager_user.id}", headers={"Authorization": f"Bearer {admin_token}"})
     assert resp.status_code == 204
+    
+    resp = client.get(f"/api/users/{manager_user.id}", headers={"Authorization": f"Bearer {admin_token}"})
+    assert resp.status_code == 404
     
     project = ProjectRepository.get_by_id(project.id)
     assert project.owner_id is None

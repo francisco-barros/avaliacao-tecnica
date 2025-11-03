@@ -1,3 +1,4 @@
+import pytest
 from src.user.repository import UserRepository
 from src.user.models import UserRole
 from src.task.models import TaskStatus
@@ -292,44 +293,7 @@ def test_reassign_task_success_as_admin(client, manager_user, member_user, admin
     assert task.assignee_id == member2.id
 
 
-def test_reassign_task_success_as_manager(client, manager_user, member_user, manager_token, auth_token):
-    from src.task.repository import TaskRepository
-    from src.task.models import Task
-    
-    resp = client.post(
-        "/api/projects",
-        json={"name": "Project 1", "description": "Description 1"},
-        headers={"Authorization": f"Bearer {manager_token}"},
-    )
-    project_id = resp.get_json()["id"]
-    
-    task = Task(
-        title="Task 1",
-        description="Description",
-        project_id=project_id,
-        assignee_id=member_user.id,
-        status=TaskStatus.PENDING,
-    )
-    task = TaskRepository.create(task)
-    
-    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
-    client.post(
-        f"/api/projects/{project_id}/members",
-        json={"user_id": member2.id},
-        headers={"Authorization": f"Bearer {manager_token}"},
-    )
-    
-    resp = client.patch(
-        f"/api/tasks/{task.id}/assignee",
-        json={"assignee_id": member2.id},
-        headers={"Authorization": f"Bearer {manager_token}"},
-    )
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["assignee_id"] == member2.id
-
-
-def test_reassign_task_success_as_owner(client, manager_user, member_user, manager_token, auth_token):
+def test_reassign_task_success_as_manager_or_owner(client, manager_user, member_user, manager_token):
     from src.task.repository import TaskRepository
     from src.task.models import Task
     

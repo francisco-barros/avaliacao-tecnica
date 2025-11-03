@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_login_success(client, test_user):
     resp = client.post("/api/auth/login", json={"email": test_user.email, "password": "password123"})
     assert resp.status_code == 200
@@ -6,13 +9,12 @@ def test_login_success(client, test_user):
     assert "refresh_token" in data
 
 
-def test_login_invalid_email(client):
-    resp = client.post("/api/auth/login", json={"email": "x@y.com", "password": "no"})
-    assert resp.status_code == 401
-
-
-def test_login_invalid_password(client, test_user):
-    resp = client.post("/api/auth/login", json={"email": test_user.email, "password": "wrong"})
+@pytest.mark.parametrize("email,password", [
+    ("x@y.com", "no"),
+    ("test@example.com", "wrong"),
+])
+def test_login_invalid_credentials(client, test_user, email, password):
+    resp = client.post("/api/auth/login", json={"email": email, "password": password})
     assert resp.status_code == 401
 
 
@@ -36,28 +38,22 @@ def test_refresh_token_invalid(client):
     assert resp.status_code == 422
 
 
-def test_register_success_as_manager(client, manager_user, auth_token):
-    token = auth_token(manager_user.email, "pass")
+@pytest.mark.parametrize("user_fixture,email", [
+    ("manager_user", "new@x.com"),
+    ("admin_user", "new2@x.com"),
+])
+def test_register_success(client, request, auth_token, user_fixture, email):
+    user = request.getfixturevalue(user_fixture)
+    token = auth_token(user.email, "pass")
     
     resp = client.post(
         "/api/auth/register",
-        json={"name": "New User", "email": "new@x.com", "password": "pass123"},
+        json={"name": "New User", "email": email, "password": "pass123"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 201
     data = resp.get_json()
-    assert data["email"] == "new@x.com"
-
-
-def test_register_success_as_admin(client, admin_user, auth_token):
-    token = auth_token(admin_user.email, "pass")
-    
-    resp = client.post(
-        "/api/auth/register",
-        json={"name": "New User", "email": "new2@x.com", "password": "pass123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert resp.status_code == 201
+    assert data["email"] == email
 
 
 def test_register_forbidden_as_member(client, member_user, auth_token):
