@@ -48,6 +48,8 @@ class TaskService:
         if task.assignee_id != requester_id:
             raise PermissionError("only assignee can change status")
         task.status = TaskStatus(status)
+        if task.status == TaskStatus.AWAITING_REASSIGNMENT:
+            task.assignee_id = None
         task = TaskRepository.update(task)
         cache.delete(f"tasks:{task.project_id}")
         ProjectService.recompute_status_if_completed(task.project_id)
