@@ -250,3 +250,229 @@ def test_project_auto_completes_when_all_tasks_done(client, manager_user, member
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["status"] == ProjectStatus.COMPLETED.value
+
+
+def test_reassign_task_success_as_admin(client, manager_user, member_user, admin_token, auth_token):
+    from src.task.repository import TaskRepository
+    from src.task.models import Task
+    
+    resp = client.post(
+        "/api/projects",
+        json={"name": "Project 1", "description": "Description 1"},
+        headers={"Authorization": f"Bearer {auth_token(manager_user.email, 'pass')}"},
+    )
+    project_id = resp.get_json()["id"]
+    
+    task = Task(
+        title="Task 1",
+        description="Description",
+        project_id=project_id,
+        assignee_id=member_user.id,
+        status=TaskStatus.PENDING,
+    )
+    task = TaskRepository.create(task)
+    
+    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
+    client.post(
+        f"/api/projects/{project_id}/members",
+        json={"user_id": member2.id},
+        headers={"Authorization": f"Bearer {auth_token(manager_user.email, 'pass')}"},
+    )
+    
+    resp = client.patch(
+        f"/api/tasks/{task.id}/assignee",
+        json={"assignee_id": member2.id},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["assignee_id"] == member2.id
+    
+    task = TaskRepository.get_by_id(task.id)
+    assert task.assignee_id == member2.id
+
+
+def test_reassign_task_success_as_manager(client, manager_user, member_user, manager_token, auth_token):
+    from src.task.repository import TaskRepository
+    from src.task.models import Task
+    
+    resp = client.post(
+        "/api/projects",
+        json={"name": "Project 1", "description": "Description 1"},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    project_id = resp.get_json()["id"]
+    
+    task = Task(
+        title="Task 1",
+        description="Description",
+        project_id=project_id,
+        assignee_id=member_user.id,
+        status=TaskStatus.PENDING,
+    )
+    task = TaskRepository.create(task)
+    
+    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
+    client.post(
+        f"/api/projects/{project_id}/members",
+        json={"user_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    
+    resp = client.patch(
+        f"/api/tasks/{task.id}/assignee",
+        json={"assignee_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["assignee_id"] == member2.id
+
+
+def test_reassign_task_success_as_owner(client, manager_user, member_user, manager_token, auth_token):
+    from src.task.repository import TaskRepository
+    from src.task.models import Task
+    
+    resp = client.post(
+        "/api/projects",
+        json={"name": "Project 1", "description": "Description 1"},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    project_id = resp.get_json()["id"]
+    
+    task = Task(
+        title="Task 1",
+        description="Description",
+        project_id=project_id,
+        assignee_id=member_user.id,
+        status=TaskStatus.PENDING,
+    )
+    task = TaskRepository.create(task)
+    
+    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
+    client.post(
+        f"/api/projects/{project_id}/members",
+        json={"user_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    
+    resp = client.patch(
+        f"/api/tasks/{task.id}/assignee",
+        json={"assignee_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["assignee_id"] == member2.id
+
+
+def test_reassign_task_forbidden_as_member(client, manager_user, member_user, manager_token, auth_token):
+    from src.task.repository import TaskRepository
+    from src.task.models import Task
+    
+    resp = client.post(
+        "/api/projects",
+        json={"name": "Project 1", "description": "Description 1"},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    project_id = resp.get_json()["id"]
+    
+    task = Task(
+        title="Task 1",
+        description="Description",
+        project_id=project_id,
+        assignee_id=member_user.id,
+        status=TaskStatus.PENDING,
+    )
+    task = TaskRepository.create(task)
+    
+    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
+    token_member = auth_token(member_user.email, "pass")
+    
+    resp = client.patch(
+        f"/api/tasks/{task.id}/assignee",
+        json={"assignee_id": member2.id},
+        headers={"Authorization": f"Bearer {token_member}"},
+    )
+    assert resp.status_code == 403
+
+
+def test_reassign_task_not_found(client, manager_user, member_user, manager_token):
+    resp = client.patch(
+        "/api/tasks/invalid-id/assignee",
+        json={"assignee_id": member_user.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    assert resp.status_code == 404
+
+
+def test_reassign_task_awaiting_reassignment_to_pending(client, manager_user, member_user, manager_token, auth_token):
+    from src.task.repository import TaskRepository
+    from src.task.models import Task
+    
+    resp = client.post(
+        "/api/projects",
+        json={"name": "Project 1", "description": "Description 1"},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    project_id = resp.get_json()["id"]
+    
+    task = Task(
+        title="Task 1",
+        description="Description",
+        project_id=project_id,
+        assignee_id=None,
+        status=TaskStatus.AWAITING_REASSIGNMENT,
+    )
+    task = TaskRepository.create(task)
+    
+    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
+    client.post(
+        f"/api/projects/{project_id}/members",
+        json={"user_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    
+    resp = client.patch(
+        f"/api/tasks/{task.id}/assignee",
+        json={"assignee_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["assignee_id"] == member2.id
+    assert data["status"] == TaskStatus.PENDING.value
+    
+    task = TaskRepository.get_by_id(task.id)
+    assert task.assignee_id == member2.id
+    assert task.status == TaskStatus.PENDING
+
+
+def test_reassign_task_invalid_assignee_not_project_member(client, manager_user, member_user, manager_token, auth_token):
+    from src.task.repository import TaskRepository
+    from src.task.models import Task
+    
+    resp = client.post(
+        "/api/projects",
+        json={"name": "Project 1", "description": "Description 1"},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    project_id = resp.get_json()["id"]
+    
+    task = Task(
+        title="Task 1",
+        description="Description",
+        project_id=project_id,
+        assignee_id=member_user.id,
+        status=TaskStatus.PENDING,
+    )
+    task = TaskRepository.create(task)
+    
+    member2 = UserRepository.create("Member2", "member2@x.com", "pass", role=UserRole.MEMBER.value)
+    
+    resp = client.patch(
+        f"/api/tasks/{task.id}/assignee",
+        json={"assignee_id": member2.id},
+        headers={"Authorization": f"Bearer {manager_token}"},
+    )
+    assert resp.status_code == 422
