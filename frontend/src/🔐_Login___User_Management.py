@@ -60,6 +60,20 @@ def get_user_id_from_token(access_token):
     except:
         return None
 
+def get_user_role_from_token(access_token):
+    try:
+        token_parts = access_token.split('.')
+        if len(token_parts) < 2:
+            return None
+        payload_part = token_parts[1]
+        padding = len(payload_part) % 4
+        if padding:
+            payload_part += '=' * (4 - padding)
+        payload = json.loads(base64.urlsafe_b64decode(payload_part))
+        return payload.get("role")
+    except:
+        return None
+
 def get_user_from_token(user_service, access_token):
     user_id = get_user_id_from_token(access_token)
     if not user_id:
@@ -121,8 +135,11 @@ def process_login(auth_service, user_service, login_data):
         return
     
     user_id = get_user_id_from_token(access_token)
+    user_role = get_user_role_from_token(access_token)
     if user_id:
         logged_user = {"id": user_id, "email": login_data["email"], "name": "User"}
+        if user_role:
+            logged_user["role"] = user_role
         set_user(logged_user)
         show_success(f"Welcome!")
         st.rerun()

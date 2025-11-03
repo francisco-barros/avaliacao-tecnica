@@ -49,7 +49,16 @@ class APIClient:
         response = requests.patch(
             url, headers=self._get_headers(), json=data, timeout=self.timeout
         )
-        response.raise_for_status()
+        if response.status_code >= 400:
+            error_data = {}
+            try:
+                error_data = response.json()
+            except:
+                error_data = {"message": response.text}
+            error_msg = error_data.get("message", f"{response.status_code} {response.reason}")
+            raise Exception(f"{response.status_code} {response.reason}: {error_msg}")
+        if response.status_code == 204:
+            return {}
         return response.json()
 
     def delete(self, url: str) -> None:
