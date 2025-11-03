@@ -71,6 +71,23 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: project_frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://backend:5000
+      - DOCKER_ENV=true
+    depends_on:
+      - backend
+    restart: unless-stopped
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/src/styles:/app/src/styles
+
 volumes:
   db_data:
   redis_data:

@@ -12,6 +12,8 @@ def create_app(config_object: type[AppConfig] | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_object or AppConfig())
     
+    app.config['PROPAGATE_EXCEPTIONS'] = True
+    
     app_logger = logging.getLogger("app")
     app_logger.setLevel(logging.INFO)
     
@@ -29,6 +31,25 @@ def create_app(config_object: type[AppConfig] | None = None) -> Flask:
         cache.init_app(app)
     swagger.init_app(app)
     register_blueprints(app)
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        from flask import jsonify, request
+        from sqlalchemy.exc import IntegrityError
+        
+        if isinstance(e, IntegrityError):
+            error_msg = str(e).lower()
+            if "unique constraint" in error_msg or "duplicate key" in error_msg or "uniqueviolation" in error_msg or "already exists" in error_msg:
+                return jsonify({"message": "Email already in use"}), 409
+        
+        error_msg = str(e).lower()
+        
+        if "unique constraint" in error_msg or "duplicate key" in error_msg or "uniqueviolation" in error_msg or "already exists" in error_msg:
+            return jsonify({"message": "Email already in use"}), 409
+        
+        import logging
+        logging.exception("Unhandled exception")
+        return jsonify({"message": "Internal server error"}), 500
 
     with app.app_context():
         db.create_all()

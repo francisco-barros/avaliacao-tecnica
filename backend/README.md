@@ -36,7 +36,7 @@ Coverage: 89%
 - `GET /` - List users
 - `GET /<id>` - Get user
 - `PATCH /<id>` - Update user
-- `DELETE /<id>` - Delete user
+- `DELETE /<id>` - Delete user (soft delete). Cascades: removes user from owned projects and reassigns tasks to AWAITING_REASSIGNMENT status
 
 **Projects** (`/api/projects`)
 - `POST /` - Create project

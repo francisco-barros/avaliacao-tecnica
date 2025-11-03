@@ -163,7 +163,7 @@ def update_user(user_id: str):
 @require_roles(["admin"])  
 def delete_user(user_id: str):
     """
-    Delete user
+    Delete user (soft delete)
     ---
     tags:
       - Users
@@ -178,7 +178,9 @@ def delete_user(user_id: str):
         description: User ID
     responses:
       204:
-        description: User deleted successfully
+        description: User deleted successfully. Performs soft delete and handles cascading updates:
+        - Projects owned by the user have their owner_id set to None
+        - Tasks assigned to the user have their status set to AWAITING_REASSIGNMENT and assignee_id set to None
       401:
         description: Not authenticated
       403:

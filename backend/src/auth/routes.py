@@ -1,10 +1,12 @@
 from flask import Blueprint, request
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from sqlalchemy.exc import IntegrityError
 from ..user.service import UserService
 from ..access_control.decorators import require_roles
-from ..http_responses.responses import success, created, unauthorized
+from ..http_responses.responses import success, created, unauthorized, conflict
 from ..log.service import LogService
 from ..log.models import ActionType
+from ..extensions import db
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -158,8 +160,34 @@ def register():
       403:
         description: Insufficient permissions (requires Admin or Manager)
     """
-    data = request.get_json() or {}
-    user = UserService.create_user(**data)
-    LogService.log_action(action=ActionType.USER_CREATED, user_id=str(user.id), resource_type="user", resource_id=str(user.id))
-    LogService.log_info("New user created", context={"user_id": str(user.id), "email": user.email})
-    return created(data=user.to_dict())
+    try:
+        data = request.get_json() or {}
+        user = UserService.create_user(**data)
+        LogService.log_action(action=ActionType.USER_CREATED, user_id=str(user.id), resource_type="user", resource_id=str(user.id))
+        LogService.log_info("New user created", context={"user_id": str(user.id), "email": user.email})
+        return created(data=user.to_dict())
+    except ValueError as e:
+        db.session.rollback()
+        if "already in use" in str(e).lower():
+            LogService.log_error("Failed to create user - email already exists", error=e, context={"email": data.get("email")})
+            return conflict("Email already in use")
+        raise
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e).lower()
+        if "unique constraint" in error_msg or "duplicate key" in error_msg or "uniqueviolation" in error_msg or "already exists" in error_msg:
+            LogService.log_error("Failed to create user - email already exists", error=e, context={"email": data.get("email")})
+            return conflict("Email already in use")
+        LogService.log_error("Failed to create user - database integrity error", error=e, context={"email": data.get("email")})
+        return conflict("Database integrity error")
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e).lower()
+        if "already in use" in error_msg:
+            LogService.log_error("Failed to create user - email already exists", error=e, context={"email": data.get("email")})
+            return conflict("Email already in use")
+        LogService.log_error("Failed to create user", error=e, context={"email": data.get("email")})
+        import traceback
+        LogService.log_error(f"Unexpected error creating user: {traceback.format_exc()}", error=e, context={"email": data.get("email")})
+        from ..http_responses.responses import internal_server_error
+        return internal_server_error("Failed to create user")

@@ -11,7 +11,15 @@ from ..cache import cache
 class UserService:
     @staticmethod
     def create_user(name: str, email: str, password: str, role: str | None = None) -> User:
-        return UserRepository.create(name=name, email=email, password=password, role=role)
+        try:
+            user = UserRepository.create(name=name, email=email, password=password, role=role)
+            cache.delete("users:all")
+            return user
+        except Exception as e:
+            from sqlalchemy.exc import IntegrityError
+            if isinstance(e, IntegrityError):
+                raise
+            raise
 
     @staticmethod
     def authenticate(email: str, password: str) -> User | None:
@@ -69,12 +77,15 @@ class UserService:
         user = UserRepository.get_by_id(user_id)
         if not user:
             return
+        
         for project in list(user.projects_owned):
             project.owner_id = None
         for task in list(user.tasks):
             task.status = TaskStatus.AWAITING_REASSIGNMENT
             task.assignee_id = None
+        
+        user.soft_delete()
         db.session.commit()
+        
         cache.delete(f"user:{user_id}")
         cache.delete("users:all")
-        UserRepository.delete(user_id)
