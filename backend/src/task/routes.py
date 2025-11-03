@@ -199,3 +199,79 @@ def update_status(task_id: str):
     except PermissionError as e:
         LogService.log_error("Permission denied to update task", error=e, context={"task_id": task_id})
         return forbidden(str(e))
+
+
+@tasks_bp.patch("/<task_id>/assignee")
+@jwt_required()
+def reassign_task(task_id: str):
+    """
+    Reassign task to a new assignee
+    ---
+    tags:
+      - Tasks
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: task_id
+        required: true
+        schema:
+          type: string
+        description: Task ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              assignee_id:
+                type: string
+                nullable: true
+                example: "user-uuid-here"
+                description: New assignee ID (null to unassign)
+    responses:
+      200:
+        description: Task reassigned successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    status:
+                      type: string
+                    project_id:
+                      type: string
+                    assignee_id:
+                      type: string
+                      nullable: true
+      401:
+        description: Not authenticated
+      403:
+        description: Only admin, manager or project owner can reassign tasks
+      404:
+        description: Task or project not found
+    """
+    try:
+        data = request.get_json() or {}
+        requester_id = get_jwt_identity()
+        new_assignee_id = data.get("assignee_id")
+        task = TaskService.reassign_task(task_id, requester_id, new_assignee_id)
+        LogService.log_action(action=ActionType.TASK_UPDATED, user_id=requester_id, resource_type="task", resource_id=task_id, details={"reassigned_to": new_assignee_id})
+        LogService.log_info("Task reassigned successfully", context={"task_id": task_id, "new_assignee_id": new_assignee_id})
+        return success(data=task.to_dict())
+    except ValueError as e:
+        LogService.log_error("Failed to reassign task", error=e, context={"task_id": task_id})
+        return not_found(str(e)) if "not found" in str(e).lower() else unprocessable_entity(str(e))
+    except PermissionError as e:
+        LogService.log_error("Permission denied to reassign task", error=e, context={"task_id": task_id})
+        return forbidden(str(e))

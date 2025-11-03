@@ -6,6 +6,7 @@ from ..project.models import ProjectStatus
 from ..extensions import socketio
 from ..project.service import ProjectService
 from ..cache import cache
+from ..user.models import UserRole
 
 
 class TaskService:
@@ -53,6 +54,37 @@ class TaskService:
         task = TaskRepository.update(task)
         cache.delete(f"tasks:{task.project_id}")
         ProjectService.recompute_status_if_completed(task.project_id)
+        TaskService.broadcast_progress(task.project_id)
+        return task
+
+    @staticmethod
+    def reassign_task(task_id: str, requester_id: str, new_assignee_id: str | None) -> Task:
+        task = TaskRepository.get_by_id(task_id)
+        if not task:
+            raise ValueError("not found")
+        project = ProjectRepository.get_by_id(task.project_id)
+        if not project:
+            raise ValueError("project not found")
+        requester = UserRepository.get_by_id(requester_id)
+        if not requester:
+            raise PermissionError("requester not found")
+        is_admin = requester.role == UserRole.ADMIN
+        is_manager = requester.role == UserRole.MANAGER
+        is_owner = project.owner_id == requester_id
+        if not (is_admin or is_manager or is_owner):
+            raise PermissionError("only admin, manager or project owner can reassign tasks")
+        if new_assignee_id:
+            new_assignee = UserRepository.get_by_id(new_assignee_id)
+            if not new_assignee:
+                raise ValueError("new assignee not found")
+            is_project_member = new_assignee_id in [m.id for m in project.members] or new_assignee_id == project.owner_id
+            if not is_project_member:
+                raise ValueError("new assignee must be a project member or owner")
+        task.assignee_id = new_assignee_id
+        if task.status == TaskStatus.AWAITING_REASSIGNMENT and new_assignee_id:
+            task.status = TaskStatus.PENDING
+        task = TaskRepository.update(task)
+        cache.delete(f"tasks:{task.project_id}")
         TaskService.broadcast_progress(task.project_id)
         return task
 
