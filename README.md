@@ -61,6 +61,13 @@ The frontend will be available at http://localhost:8501
 
 **Note:** Make sure the backend API is running (http://localhost:5000) and accessible from the frontend.
 
+### To Do
+
+- Implement login token persistence when reloading the web page
+- Implement real-time dashboard data updates in the frontend
+- Improve web page layout and responsiveness
+- Handle validations and edge cases in the frontend
+
 ## Testing
 
 **IMPORTANT**: Prefer testing with Postman collections (`backend/postman/`) as API documentation may contain unexpected errors.
@@ -155,14 +162,16 @@ backend/
 │   ├── access_control/           # Authorization decorators
 │   │   └── decorators.py        # Role-based access control
 │   ├── cache/                    # Redis caching
-│   │   ├── client.py            # Cache client
-│   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   └── client.py            # Cache client
 │   ├── log/                      # Logging system
+│   │   ├── __init__.py
 │   │   ├── models.py            # Log model
 │   │   ├── repository.py        # Log database operations
 │   │   ├── service.py           # Log service + app logging
 │   │   └── decorator.py         # Log decorator
 │   ├── http_responses/           # Standardized HTTP responses
+│   │   ├── __init__.py
 │   │   └── responses.py         # Response helpers
 │   ├── extensions.py             # Flask extensions (DB, JWT, etc.)
 │   ├── factory.py                # Application factory
@@ -175,17 +184,21 @@ backend/
 │   ├── test_auth.py             # Auth tests
 │   ├── test_users.py            # User tests
 │   ├── test_projects.py         # Project tests
+│   ├── test_projects_tasks.py   # Projects and tasks integration tests
 │   ├── test_tasks.py            # Task tests
 │   └── test_services.py         # Service tests
 ├── postman/                      # API testing
 │   ├── postman_collection.json  # All endpoints
-│   └── postman_environment.json # Environment vars
+│   ├── postman_environment.json # Environment vars
+│   └── README.md                # Postman collection documentation
 ├── seed/                         # Seed data
 │   ├── users.json               # Test users
 │   ├── projects.json            # Test projects
 │   └── tasks.json               # Test tasks
 ├── scripts/                      # Utility scripts
 │   └── load_seed_data.py        # Seed loader
+├── docs/                         # Documentation
+│   └── Avaliacao_Tecnica_Python.pdf  # Technical assessment document
 ├── Dockerfile                    # Backend container
 ├── requirements.txt              # Python dependencies
 └── pytest.ini                    # Test configuration
@@ -200,30 +213,48 @@ frontend/
 │   ├── pages/                   # Streamlit pages
 │   │   ├── 2_Projects.py        # Projects management page
 │   │   ├── 3_Tasks.py           # Tasks management page
-│   │   └── 4_Profile.py         # Profile/Settings page
+│   │   ├── 4_Dashboard.py       # Dashboard with project and task overview
+│   │   └── 5_Profile.py         # Profile/Settings page
 │   ├── components/              # Reusable components
 │   │   ├── forms/               # Form components
+│   │   │   ├── login_form.py    # Login form
+│   │   │   ├── user_form.py     # User creation/editing form
+│   │   │   ├── project_form.py  # Project creation/editing form
+│   │   │   ├── task_form.py     # Task creation/editing form
+│   │   │   └── profile_form.py  # Profile editing form
 │   │   ├── tables/              # Table components
-│   │   └── managers/            # Management components
+│   │   │   ├── base_grid_table.py  # Base grid table component
+│   │   │   ├── users_table.py   # Users table
+│   │   │   ├── projects_table.py  # Projects table
+│   │   │   └── tasks_table.py   # Tasks table
+│   │   ├── managers/            # Management components
+│   │   │   └── member_manager.py  # Project member management
+│   │   └── widgets/             # Widget components
 │   ├── services/                # API services
-│   │   ├── api/                 # Service classes (AuthService, UserService, etc.)
+│   │   ├── api/                 # Service classes
+│   │   │   ├── auth_service.py  # Authentication service
+│   │   │   ├── user_service.py  # User service
+│   │   │   ├── project_service.py  # Project service
+│   │   │   └── task_service.py  # Task service
 │   │   └── base/                # Base API client
+│   │       └── api_client.py    # Base API client with authentication
 │   ├── state/                   # State management
-│   │   └── auth_state.py        # Authentication state
+│   │   └── auth_state.py        # Authentication state and token management
 │   ├── utils/                   # Utilities
 │   │   ├── constants.py         # Constants (UserRole, etc.)
 │   │   ├── formatters.py        # Data formatters
 │   │   ├── helpers.py           # Helper functions
-│   │   └── validators.py        # Validation functions
+│   │   └── validators.py       # Validation functions
 │   ├── config/                  # Configuration
 │   │   ├── api_config.py        # API endpoints configuration
 │   │   └── settings.py          # Application settings
 │   └── styles/                  # CSS styles
 │       ├── main.css             # Main styles
-│       └── components.css       # Component styles
+│       ├── components.css       # Component styles
+│       └── users_table.css      # Users table specific styles
 ├── Dockerfile                   # Frontend container
 ├── requirements.txt             # Python dependencies
-└── README.md
+└── README.md                    # Frontend documentation
 ```
 
 ### Architecture Patterns
