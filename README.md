@@ -85,7 +85,8 @@ Use Postman collection for reliable endpoint testing:
 ### Tasks
 - `POST /api/tasks` - Create new task
 - `GET /api/tasks/project/<project_id>` - List project tasks
-- `PATCH /api/tasks/<task_id>/status` - Update task status
+- `PATCH /api/tasks/<task_id>/status` - Update task status (only assignee can update)
+- `PATCH /api/tasks/<task_id>/assignee` - Reassign task to a new assignee (Admin, Manager or Project Owner only)
 
 ## Architecture
 
